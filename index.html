@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SDM Coaching Dashboard</title>
+  <style>
+    /* ── Design Tokens ───────────────────────────────────── */
+    :root {
+      --bg:        #F8F9FA;
+      --surface:   #FFFFFF;
+      --border:    #E5E5E5;
+      --border-2:  #D1D5DB;
+
+      --txt-1: #111827;
+      --txt-2: #6B7280;
+      --txt-3: #9CA3AF;
+
+      --accent:       #6366F1;
+      --accent-hover: #4F46E5;
+      --accent-light: #EEF2FF;
+      --accent-mid:   #C7D2FE;
+
+      --green-bg:  #DCFCE7; --green-tx: #166534;
+      --blue-bg:   #E0F2FE; --blue-tx:  #075985;
+      --yellow-bg: #FEF9C3; --yellow-tx:#854D0E;
+
+      --r-sm: 6px; --r-md: 10px; --r-lg: 14px; --r-full: 9999px;
+      --sh-sm: 0 1px 2px rgba(0,0,0,.05);
+      --sh-md: 0 4px 6px -1px rgba(0,0,0,.10), 0 2px 4px -2px rgba(0,0,0,.08);
+      --sh-lg: 0 10px 24px -4px rgba(0,0,0,.14), 0 4px 8px -4px rgba(0,0,0,.08);
+    }
+
+    /* ── Reset ───────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Apple SD Gothic Neo',
+                   'Noto Sans KR', sans-serif;
+      background: var(--bg);
+      color: var(--txt-1);
+      min-height: 100vh;
+      font-size: 14px;
+    }
+
+    /* ── Header ──────────────────────────────────────────── */
+    .header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 200;
+    }
+    .header-inner {
+      max-width: 1440px; margin: 0 auto;
+      display: flex; align-items: center; gap: 20px;
+      height: 60px; padding: 0 24px;
+    }
+    .logo { font-size: 15px; font-weight: 700; letter-spacing: -.3px; white-space: nowrap; }
+    .logo em { color: var(--accent); font-style: normal; }
+    .hdiv { width: 1px; height: 18px; background: var(--border); }
+    .h-stats { display: flex; gap: 18px; font-size: 12px; color: var(--txt-2); }
+    .h-stats b { color: var(--txt-1); font-weight: 600; }
+    .h-actions { display: flex; gap: 8px; margin-left: auto; }
+
+    /* ── Buttons ─────────────────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 6px 13px; border-radius: var(--r-sm);
+      font-size: 13px; font-weight: 500;
+      cursor: pointer; border: none; transition: all .15s;
+      white-space: nowrap; font-family: inherit;
+    }
+    .btn-primary   { background: var(--accent); color: #fff; }
+    .btn-primary:hover   { background: var(--accent-hover); }
+    .btn-secondary { background: var(--bg); color: var(--txt-1); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: #EFEFEF; }
+    .btn-ghost     { background: transparent; color: var(--txt-2); border: 1px solid var(--border); }
+    .btn-ghost:hover     { background: var(--bg); color: var(--txt-1); }
+    .btn-danger    { background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; }
+    .btn-danger:hover    { background: #FECACA; }
+
+    /* ── Main ────────────────────────────────────────────── */
+    .main { max-width: 1440px; margin: 0 auto; padding: 24px; }
+
+    /* ── Toolbar ─────────────────────────────────────────── */
+    .toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+    .search-wrap { position: relative; flex: 1; max-width: 280px; }
+    .search-wrap input {
+      width: 100%; padding: 7px 10px 7px 34px;
+      border: 1px solid var(--border); border-radius: var(--r-sm);
+      font-size: 13px; background: var(--surface); color: var(--txt-1);
+      outline: none; transition: border-color .15s; font-family: inherit;
+    }
+    .search-wrap input:focus { border-color: var(--accent); }
+    .search-ico {
+      position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+      color: var(--txt-3); pointer-events: none;
+    }
+    .filter-tabs {
+      display: flex; gap: 3px;
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: var(--r-sm); padding: 3px;
+    }
+    .f-tab {
+      padding: 4px 11px; border-radius: 4px; font-size: 12px;
+      cursor: pointer; color: var(--txt-2); transition: all .15s;
+      border: none; background: transparent; font-family: inherit;
+    }
+    .f-tab.active { background: var(--surface); color: var(--txt-1); font-weight: 600; box-shadow: var(--sh-sm); }
+    .sort-select {
+      padding: 6px 10px; border: 1px solid var(--border); border-radius: var(--r-sm);
+      font-size: 12px; font-family: inherit; background: var(--surface); color: var(--txt-2);
+      cursor: pointer; outline: none;
+    }
+    .count-badge { margin-left: auto; font-size: 12px; color: var(--txt-3); white-space: nowrap; }
+
+    /* ── Card Grid ───────────────────────────────────────── */
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 14px; }
+
+    /* ── Member Card ─────────────────────────────────────── */
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r-lg); padding: 18px 18px 14px;
+      cursor: pointer; transition: all .18s; box-shadow: var(--sh-sm);
+      position: relative; display: flex; flex-direction: column; gap: 12px;
+    }
+    .card:hover { border-color: var(--border-2); box-shadow: var(--sh-md); transform: translateY(-2px); }
+
+    .c-head { display: flex; align-items: flex-start; gap: 10px; }
+    .avatar {
+      width: 38px; height: 38px; border-radius: var(--r-full);
+      background: linear-gradient(135deg, var(--accent-light), var(--accent-mid));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; font-weight: 700; color: var(--accent);
+      flex-shrink: 0; user-select: none;
+    }
+    .c-meta { flex: 1; min-width: 0; }
+    .c-name { font-size: 15px; font-weight: 600; margin-bottom: 5px; }
+    .tag-row { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+
+    .tag { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: var(--r-full); font-size: 11px; font-weight: 500; white-space: nowrap; }
+    .t-done    { background: var(--green-bg);  color: var(--green-tx); }
+    .t-sched   { background: var(--blue-bg);   color: var(--blue-tx); }
+    .t-pending { background: var(--yellow-bg); color: var(--yellow-tx); }
+    .t-format  { background: #F3F4F6; color: var(--txt-2); }
+    .t-date    { font-size: 11px; color: var(--txt-3); }
+
+    .edit-ico {
+      opacity: 0; width: 26px; height: 26px;
+      border-radius: var(--r-sm); border: 1px solid var(--border);
+      background: transparent; color: var(--txt-3);
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: all .15s;
+    }
+    .card:hover .edit-ico { opacity: 1; }
+    .edit-ico:hover { background: var(--bg); color: var(--txt-1); }
+
+    /* Progress */
+    .stage-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
+    .stage-lbl { font-size: 11px; color: var(--txt-2); font-weight: 500; }
+    .stage-val { font-size: 11px; font-weight: 700; color: var(--accent); }
+    .track { height: 5px; background: var(--accent-light); border-radius: var(--r-full); overflow: hidden; }
+    .fill { height: 100%; background: linear-gradient(90deg, #A5B4FC 0%, var(--accent) 100%); border-radius: var(--r-full); transition: width .6s ease; }
+
+    .chips { display: flex; flex-wrap: wrap; gap: 4px; }
+    .chip { padding: 2px 8px; border-radius: var(--r-full); font-size: 11px; background: var(--bg); border: 1px solid var(--border); color: var(--txt-2); max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .chip-accent { background: var(--accent-light); border-color: var(--accent-mid); color: var(--accent); }
+
+    .c-foot { border-top: 1px solid #F3F4F6; padding-top: 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .next-lbl { font-size: 10px; color: var(--txt-3); margin-bottom: 2px; }
+    .next-val { font-size: 12px; font-weight: 500; color: var(--txt-1); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 230px; }
+    .chevron { color: var(--txt-3); flex-shrink: 0; }
+
+    .empty { grid-column: 1/-1; text-align: center; padding: 64px 24px; color: var(--txt-2); }
+    .empty h3 { font-size: 15px; color: var(--txt-1); margin-bottom: 6px; }
+    .empty p { font-size: 13px; }
+
+    /* ── Modal shell ─────────────────────────────────────── */
+    .overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.38); z-index: 1000;
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+      opacity: 0; pointer-events: none; transition: opacity .2s;
+    }
+    .overlay.open { opacity: 1; pointer-events: all; }
+
+    /* Modal is a flex column — head/tabs/foot are fixed, body scrolls */
+    .modal {
+      background: var(--surface); border-radius: var(--r-lg);
+      width: 100%; max-width: 780px; max-height: 92vh;
+      display: flex; flex-direction: column; overflow: hidden;
+      box-shadow: var(--sh-lg);
+      transform: scale(.96) translateY(12px); transition: transform .2s;
+    }
+    .overlay.open .modal { transform: scale(1) translateY(0); }
+
+    .m-head {
+      display: flex; align-items: center; gap: 14px;
+      padding: 20px 22px 16px; border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .m-avatar {
+      width: 46px; height: 46px; border-radius: var(--r-full);
+      background: linear-gradient(135deg, var(--accent-light), var(--accent-mid));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: 700; color: var(--accent); flex-shrink: 0;
+    }
+    .m-title { flex: 1; }
+    .m-name { font-size: 18px; font-weight: 700; margin-bottom: 5px; }
+    .m-close {
+      width: 30px; height: 30px; border-radius: var(--r-sm);
+      border: 1px solid var(--border); background: transparent;
+      color: var(--txt-2); cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 17px; transition: all .15s;
+    }
+    .m-close:hover { background: var(--bg); }
+
+    /* ── Modal Tab Bar ───────────────────────────────────── */
+    .m-tab-bar {
+      display: flex; align-items: stretch;
+      border-bottom: 1px solid var(--border);
+      padding: 0 22px; flex-shrink: 0;
+      background: var(--surface);
+    }
+    .m-tab {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 11px 4px; margin-right: 20px;
+      font-size: 13px; font-weight: 500; color: var(--txt-2);
+      cursor: pointer; border: none; background: transparent;
+      position: relative; font-family: inherit;
+      transition: color .15s;
+    }
+    .m-tab::after {
+      content: ''; position: absolute;
+      bottom: -1px; left: 0; right: 0;
+      height: 2px; background: var(--accent);
+      border-radius: 2px 2px 0 0;
+      opacity: 0; transition: opacity .2s;
+    }
+    .m-tab.active { color: var(--accent); font-weight: 600; }
+    .m-tab.active::after { opacity: 1; }
+
+    .tab-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 17px; height: 17px; padding: 0 4px;
+      background: var(--accent-light); color: var(--accent);
+      border-radius: var(--r-full); font-size: 10px; font-weight: 700;
+    }
+
+    /* ── Modal Body (scrollable) ─────────────────────────── */
+    .m-body { flex: 1; overflow-y: auto; }
+
+    /* ── Tab Panes ───────────────────────────────────────── */
+    @keyframes paneIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .tab-pane { animation: paneIn .18s ease; }
+    .tab-pane.hidden { display: none !important; }
+
+    /* Info pane uses 2-col grid */
+    .pane-grid {
+      padding: 20px 22px;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+    }
+
+    /* Interviews pane single-col */
+    .pane-iv { padding: 20px 22px; }
+
+    /* ── Shared section / field styles ───────────────────── */
+    .sec { background: var(--bg); border-radius: var(--r-md); padding: 14px; }
+    .sec.full { grid-column: 1/-1; }
+    .sec-ttl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .7px; color: var(--txt-3); margin-bottom: 10px; }
+    .f-row { margin-bottom: 8px; }
+    .f-row:last-child { margin-bottom: 0; }
+    .f-lbl { font-size: 10px; color: var(--txt-3); margin-bottom: 2px; }
+    .f-val { font-size: 13px; color: var(--txt-1); line-height: 1.55; }
+    .f-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
+    .f-tag { padding: 2px 8px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-full); font-size: 11px; color: var(--txt-2); }
+    .dash { color: var(--txt-3); font-size: 13px; }
+
+    /* Stage bar */
+    .m-stage-bar { margin-bottom: 10px; }
+    .m-stage-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
+    .m-stage-name { font-size: 14px; font-weight: 600; }
+    .m-stage-pct { font-size: 14px; font-weight: 700; color: var(--accent); }
+    .m-track { height: 7px; background: var(--accent-light); border-radius: var(--r-full); overflow: hidden; }
+    .m-fill { height: 100%; background: linear-gradient(90deg, #A5B4FC, var(--accent)); border-radius: var(--r-full); transition: width .6s ease; }
+    .stage-labels { display: flex; justify-content: space-between; margin-top: 5px; }
+    .stage-labels span { font-size: 10px; color: var(--txt-3); }
+
+    /* ── Edit inputs ─────────────────────────────────────── */
+    .e-input, .e-textarea, .e-select {
+      width: 100%; padding: 7px 10px;
+      border: 1px solid var(--border); border-radius: var(--r-sm);
+      font-size: 13px; font-family: inherit;
+      background: var(--surface); color: var(--txt-1);
+      outline: none; transition: border-color .15s;
+    }
+    .e-input:focus, .e-textarea:focus, .e-select:focus { border-color: var(--accent); }
+    .e-textarea { resize: vertical; min-height: 72px; }
+    .e-select { cursor: pointer; }
+    .e-range-row { display: flex; align-items: center; gap: 10px; }
+    .e-range { flex: 1; accent-color: var(--accent); cursor: pointer; }
+    .e-range-val { font-size: 13px; font-weight: 700; color: var(--accent); min-width: 38px; text-align: right; }
+
+    .stage-btns { display: flex; gap: 4px; flex-wrap: wrap; }
+    .s-btn {
+      flex: 1; min-width: 60px; padding: 5px 6px;
+      border: 1px solid var(--border); border-radius: 5px;
+      background: var(--surface); color: var(--txt-2);
+      font-size: 11px; cursor: pointer; font-family: inherit;
+      text-align: center; transition: all .15s;
+    }
+    .s-btn.on { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+
+    /* ── Interview Entry (Edit) ──────────────────────────── */
+    .iv-entry {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r-md); margin-bottom: 10px;
+      overflow: hidden; transition: box-shadow .15s;
+    }
+    .iv-entry:last-child { margin-bottom: 0; }
+    .iv-entry:focus-within { border-color: var(--accent-mid); box-shadow: 0 0 0 3px var(--accent-light); }
+
+    .iv-head {
+      display: flex; align-items: center; gap: 8px;
+      padding: 9px 12px;
+      background: var(--bg); border-bottom: 1px solid var(--border);
+    }
+    .iv-num {
+      flex-shrink: 0;
+      font-size: 11px; font-weight: 700; color: var(--accent);
+      background: var(--accent-light); padding: 2px 8px;
+      border-radius: var(--r-full);
+    }
+    .iv-title-input {
+      flex: 1; padding: 4px 8px;
+      border: 1px solid transparent; border-radius: 4px;
+      font-size: 13px; font-weight: 500; font-family: inherit;
+      background: transparent; color: var(--txt-1);
+      outline: none; transition: all .15s; min-width: 0;
+    }
+    .iv-title-input:hover { border-color: var(--border); background: var(--surface); }
+    .iv-title-input:focus { border-color: var(--accent); background: var(--surface); }
+    .iv-del {
+      flex-shrink: 0; width: 24px; height: 24px;
+      border-radius: 4px; border: 1px solid var(--border);
+      background: transparent; color: var(--txt-3);
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      font-size: 15px; line-height: 1; transition: all .15s;
+    }
+    .iv-del:hover { background: #FEE2E2; border-color: #FECACA; color: #991B1B; }
+
+    .iv-body { padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+
+    /* Interview Add Button */
+    .iv-add-btn {
+      width: 100%; padding: 9px; margin-top: 12px;
+      border: 1.5px dashed var(--border-2); border-radius: var(--r-md);
+      background: transparent; color: var(--txt-2);
+      font-size: 13px; font-family: inherit; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 5px;
+      transition: all .15s;
+    }
+    .iv-add-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+
+    /* ── Interview Entry (Detail / Read-only) ────────────── */
+    .iv-card {
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      overflow: hidden; margin-bottom: 10px;
+    }
+    .iv-card:last-child { margin-bottom: 0; }
+    .iv-card-head {
+      display: flex; align-items: center; gap: 8px;
+      padding: 9px 14px; background: var(--bg);
+      border-bottom: 1px solid var(--border);
+    }
+    .iv-card-num {
+      font-size: 11px; font-weight: 700; color: var(--accent);
+      background: var(--accent-light); padding: 2px 8px;
+      border-radius: var(--r-full); flex-shrink: 0;
+    }
+    .iv-card-title { font-size: 13px; font-weight: 600; }
+    .iv-card-date { margin-left: auto; font-size: 11px; color: var(--txt-3); flex-shrink: 0; }
+    .iv-card-body { padding: 12px 14px; }
+    .iv-card-content {
+      font-size: 13px; color: var(--txt-1); line-height: 1.65;
+      white-space: pre-wrap;
+    }
+
+    /* Empty interviews */
+    .iv-empty {
+      text-align: center; padding: 40px 20px;
+      color: var(--txt-3); font-size: 13px;
+    }
+
+    /* ── Modal Footer ────────────────────────────────────── */
+    .m-foot {
+      padding: 14px 22px; border-top: 1px solid var(--border);
+      display: flex; justify-content: flex-end; gap: 8px;
+      flex-shrink: 0;
+    }
+
+    /* ── Toast ───────────────────────────────────────────── */
+    .toast {
+      position: fixed; bottom: 24px; right: 24px;
+      background: #1F2937; color: #fff;
+      padding: 11px 16px; border-radius: var(--r-md);
+      font-size: 13px; font-weight: 500; box-shadow: var(--sh-lg);
+      z-index: 3000; opacity: 0; transform: translateY(8px);
+      transition: all .2s; pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    #file-imp { display: none; }
+
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 3px; }
+
+    @media (max-width: 800px) {
+      .h-stats { display: none; }
+      .grid { grid-template-columns: 1fr; }
+      .pane-grid { grid-template-columns: 1fr; }
+      .main { padding: 14px; }
+      .h-actions .btn span { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ───────────────────────────────────────────── -->
+<header class="header">
+  <div class="header-inner">
+    <div class="logo">SDM <em>Coaching</em></div>
+    <div class="hdiv"></div>
+    <div class="h-stats">
+      <span>전체 <b id="s-all">0</b>명</span>
+      <span>완료 <b id="s-done">0</b>명</span>
+      <span>예정 <b id="s-sched">0</b>명</span>
+      <span>대기 <b id="s-pend">0</b>명</span>
+    </div>
+    <div class="h-actions">
+      <button class="btn btn-secondary" onclick="addMember()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <span>회원 추가</span>
+      </button>
+      <button class="btn btn-secondary" onclick="document.getElementById('file-imp').click()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <span>JSON 가져오기</span>
+      </button>
+      <button class="btn btn-primary" onclick="exportJSON()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span>JSON 내보내기</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<input type="file" id="file-imp" accept=".json" onchange="importJSON(event)">
+
+<!-- ── Main ─────────────────────────────────────────────── -->
+<main class="main">
+  <div class="toolbar">
+    <div class="search-wrap">
+      <svg class="search-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="q" placeholder="이름 검색…" oninput="render()">
+    </div>
+    <div class="filter-tabs">
+      <button class="f-tab active" onclick="setFilter('all',this)">전체</button>
+      <button class="f-tab" onclick="setFilter('completed',this)">완료</button>
+      <button class="f-tab" onclick="setFilter('scheduled',this)">예정</button>
+      <button class="f-tab" onclick="setFilter('pending',this)">대기</button>
+    </div>
+    <select class="sort-select" id="sort-sel" onchange="render()">
+      <option value="name">이름순</option>
+      <option value="stage-desc">성장 단계 높은순</option>
+      <option value="stage-asc">성장 단계 낮은순</option>
+      <option value="date-desc">최근 면담순</option>
+    </select>
+    <span class="count-badge" id="count-badge"></span>
+  </div>
+  <div class="grid" id="grid"></div>
+</main>
+
+<!-- ── Modal ─────────────────────────────────────────────── -->
+<div class="overlay" id="overlay" onclick="onOverlay(event)">
+  <div class="modal" id="modal">
+    <div class="m-head">
+      <div class="m-avatar" id="m-av"></div>
+      <div class="m-title">
+        <div class="m-name" id="m-nm"></div>
+        <div class="tag-row" id="m-tags"></div>
+      </div>
+      <button class="m-close" onclick="closeModal()">&#215;</button>
+    </div>
+    <div class="m-tab-bar" id="m-tab-bar"></div>
+    <div class="m-body" id="m-body"></div>
+    <div class="m-foot" id="m-foot"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ── Script ────────────────────────────────────────────── -->
+<script>
+/* ── Constants ──────────────────────────────────────────── */
+const STAGES   = ['탐색기','발견기','성장기','발전기','성숙기'];
+const STAGE_PCT = [20, 40, 60, 80, 100];
+
+/* ── Default ─────────────────────────────────────────────── */
+const blank = () => ({
+  id: uid(),
+  name: '새 회원',
+  interviewStatus: 'pending',
+  interviewFormat: '',
+  interviewDate: '',
+  brandSheet: { coreExperiences: [], values: [] },
+  designPerspective: '',
+  intensiveProjectTheme: '',
+  strengths: [],
+  improvements: [],
+  tutorFeedback: '',
+  operatorInterpretation: '',
+  growthStage: { stageIndex: 0, customPercent: null },
+  nextTask: '',
+  futureSchedule: [],
+  interviews: []           // ← NEW: array of { id, title, date, content }
+});
+
+function uid() {
+  return typeof crypto !== 'undefined' && crypto.randomUUID
+    ? crypto.randomUUID()
+    : Math.random().toString(36).slice(2) + Date.now().toString(36);
+}
+
+/* ── State ───────────────────────────────────────────────── */
+let db      = [];
+let filt    = 'all';
+let curId   = null;
+let curMode = 'detail'; // 'detail' | 'edit'
+let curTab  = 'info';   // 'info'   | 'interviews'
+
+/* ── Storage ─────────────────────────────────────────────── */
+const STORE_KEY = 'sdm_v3';
+function save() { localStorage.setItem(STORE_KEY, JSON.stringify(db)); }
+function load() {
+  const raw = localStorage.getItem(STORE_KEY);
+  db = raw ? JSON.parse(raw).map(normalise) : demo();
+  save();
+}
+function resetData() {
+  if (!confirm('모든 데이터를 초기화하고 샘플 데이터로 되돌릴까요?')) return;
+  localStorage.removeItem(STORE_KEY);
+  db = demo(); save(); render();
+  toast('초기화 완료');
+}
+
+function normalise(m) {
+  return {
+    ...blank(), ...m,
+    id:         m.id || uid(),
+    brandSheet: { coreExperiences:[], values:[], ...(m.brandSheet||{}) },
+    growthStage:{ stageIndex:0, customPercent:null, ...(m.growthStage||{}) },
+    interviews: (m.interviews||[]).map(iv => ({
+      id: iv.id || uid(), title: iv.title||'', date: iv.date||'', content: iv.content||''
+    }))
+  };
+}
+
+/* ── Demo data ───────────────────────────────────────────── */
+function demo() {
+  return [
+    {
+      id: uid(), name: '김지은',
+      interviewStatus: 'completed', interviewFormat: '대면', interviewDate: '2025-04-15',
+      brandSheet: { coreExperiences: ['UX 리서치 인턴십','소셜벤처 활동'], values: ['사용자 공감','지속가능성'] },
+      designPerspective: '사람의 행동 패턴을 관찰하고 맥락을 읽는 것에서 디자인이 시작된다.',
+      intensiveProjectTheme: '노인 디지털 격차 해소 서비스 디자인',
+      strengths: ['공감 능력','체계적 리서치','스토리텔링'],
+      improvements: ['시각적 구현력','프로토타이핑 속도'],
+      tutorFeedback: '리서치 역량이 탁월하나 시각화 단계에서 시간 소요. 빠른 프로토타이핑 연습 권장.',
+      operatorInterpretation: 'UX 리서처 방향성으로 성장 중. 비주얼 역량 강화 시 균형잡힌 디자이너로 발전 가능.',
+      growthStage: { stageIndex: 2, customPercent: null },
+      nextTask: 'Figma 집중 학습 후 미드파이 프로토타입 제출',
+      futureSchedule: ['5월 그룹 크리틱','6월 인텐시브 중간 발표'],
+      interviews: [
+        { id: uid(), title: '1차 면담', date: '2025-03-12', content: '포트폴리오 초안 검토. 리서치 방법론 강점 확인. 노인 디지털 격차 주제 초안 제안 → 긍정적 반응.\n\n과제: 관련 선행 사례 3개 이상 리서치 후 다음 면담 공유.' },
+        { id: uid(), title: '2차 면담', date: '2025-04-15', content: '선행 사례 리서치 결과 발표 — 깊이 있는 분석 좋음. Figma 프로토타입 속도가 아이디에이션을 따라가지 못하는 문제 논의.\n\n과제: Figma 집중 학습 후 미드파이 프로토타입 다음 크리틱 전 제출.' }
+      ]
+    },
+    {
+      id: uid(), name: '이준혁',
+      interviewStatus: 'completed', interviewFormat: '온라인', interviewDate: '2025-04-18',
+      brandSheet: { coreExperiences: ['스타트업 UI 디자인','개인 브랜딩 프로젝트'], values: ['완성도','트렌드 민감성'] },
+      designPerspective: '디자인은 시각적 언어다. 아름다운 것이 좋은 경험을 만든다.',
+      intensiveProjectTheme: 'Z세대 라이프스타일 브랜드 아이덴티티',
+      strengths: ['비주얼 감각','트렌드 파악','빠른 실행'],
+      improvements: ['리서치 깊이','사용자 관점 전환'],
+      tutorFeedback: '결과물 완성도 높으나 근거 설명 부족. "왜 이 디자인인가"에 대한 논리 강화 필요.',
+      operatorInterpretation: '비주얼 주도형 디자이너. 리서치 기반 의사결정 연습이 다음 성장 키.',
+      growthStage: { stageIndex: 3, customPercent: null },
+      nextTask: '디자인 결정 근거 문서화 (Design Rationale 작성)',
+      futureSchedule: ['5월 1:1 보충 세션','5월 그룹 크리틱'],
+      interviews: [
+        { id: uid(), title: '1차 면담', date: '2025-03-20', content: '브랜드 아이덴티티 방향성 논의. 비주얼 감각은 뛰어나나 사용자 리서치 없이 방향 결정하는 패턴 우려.\n\n과제: 타깃 Z세대 인터뷰 2인 이상 진행 후 인사이트 정리.' },
+        { id: uid(), title: '2차 면담', date: '2025-04-18', content: '인터뷰 결과 반영된 디자인 시안 리뷰. 개선됐으나 논리 연결이 여전히 약함.\n\nDesign Rationale 문서 작성법 안내. 다음 제출물에 필수 첨부 요청.' }
+      ]
+    },
+    {
+      id: uid(), name: '박소연',
+      interviewStatus: 'scheduled', interviewFormat: '대면', interviewDate: '2025-05-08',
+      brandSheet: { coreExperiences: ['NGO 캠페인 디자인','공모전 수상'], values: ['사회적 임팩트','협업'] },
+      designPerspective: '디자인으로 세상을 바꿀 수 있다. 메시지를 담는 그릇이 디자인.',
+      intensiveProjectTheme: '기후변화 인식 개선 캠페인 시각물',
+      strengths: ['메시지 전달력','협업 능력','사회 이슈 감수성'],
+      improvements: ['디지털 툴 숙련도','프로세스 체계화'],
+      tutorFeedback: '면담 예정.',
+      operatorInterpretation: '면담 예정.',
+      growthStage: { stageIndex: 1, customPercent: null },
+      nextTask: '포트폴리오 정리 및 자기소개서 초안 작성',
+      futureSchedule: ['5월 8일 면담','5월 그룹 크리틱'],
+      interviews: []
+    },
+    {
+      id: uid(), name: '최민준',
+      interviewStatus: 'pending', interviewFormat: '', interviewDate: '',
+      brandSheet: { coreExperiences: [], values: [] },
+      designPerspective: '', intensiveProjectTheme: '',
+      strengths: [], improvements: [],
+      tutorFeedback: '', operatorInterpretation: '',
+      growthStage: { stageIndex: 0, customPercent: null },
+      nextTask: '오리엔테이션 완료 후 면담 일정 조율',
+      futureSchedule: [],
+      interviews: []
+    }
+  ].map(normalise);
+}
+
+/* ── Helpers ─────────────────────────────────────────────── */
+const initials  = n => n ? n.charAt(0) : '?';
+const esc       = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const arrInput  = id => (document.getElementById(id).value||'').split(',').map(s=>s.trim()).filter(Boolean);
+const pctOf     = m => m.growthStage.customPercent ?? STAGE_PCT[m.growthStage.stageIndex] ?? 0;
+const stageOf   = m => STAGES[m.growthStage.stageIndex] ?? STAGES[0];
+
+const STATUS = {
+  completed: { cls:'t-done',    lbl:'완료' },
+  scheduled: { cls:'t-sched',   lbl:'예정' },
+  pending:   { cls:'t-pending', lbl:'대기' }
+};
+
+function tagHTML(m) {
+  const s   = STATUS[m.interviewStatus] || STATUS.pending;
+  const fmt = m.interviewFormat ? `<span class="tag t-format">${esc(m.interviewFormat)}</span>` : '';
+  const dt  = m.interviewDate   ? `<span class="t-date">${esc(m.interviewDate)}</span>` : '';
+  return `<span class="tag ${s.cls}">${s.lbl}</span>${fmt}${dt}`;
+}
+
+function tagsSpan(arr) {
+  if (!arr || !arr.length) return `<span class="dash">—</span>`;
+  return arr.map(t=>`<span class="f-tag">${esc(t)}</span>`).join('');
+}
+
+/* ── Filter / Sort ───────────────────────────────────────── */
+function setFilter(f, el) {
+  filt = f;
+  document.querySelectorAll('.f-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  render();
+}
+
+function filtered() {
+  const q   = (document.getElementById('q').value||'').trim().toLowerCase();
+  const srt = document.getElementById('sort-sel').value;
+  let arr = db.filter(m => {
+    return (filt==='all' || m.interviewStatus===filt) &&
+           (!q || m.name.toLowerCase().includes(q));
+  });
+  if (srt==='name')       arr.sort((a,b)=>a.name.localeCompare(b.name,'ko'));
+  if (srt==='stage-desc') arr.sort((a,b)=>pctOf(b)-pctOf(a));
+  if (srt==='stage-asc')  arr.sort((a,b)=>pctOf(a)-pctOf(b));
+  if (srt==='date-desc')  arr.sort((a,b)=>(b.interviewDate||'').localeCompare(a.interviewDate||''));
+  return arr;
+}
+
+/* ── Stats ───────────────────────────────────────────────── */
+function updateStats() {
+  document.getElementById('s-all').textContent   = db.length;
+  document.getElementById('s-done').textContent  = db.filter(m=>m.interviewStatus==='completed').length;
+  document.getElementById('s-sched').textContent = db.filter(m=>m.interviewStatus==='scheduled').length;
+  document.getElementById('s-pend').textContent  = db.filter(m=>m.interviewStatus==='pending').length;
+}
+
+/* ── Render Cards ────────────────────────────────────────── */
+function render() {
+  updateStats();
+  const list = filtered();
+  document.getElementById('count-badge').textContent = list.length + '명';
+  const grid = document.getElementById('grid');
+
+  if (!list.length) {
+    grid.innerHTML = `<div class="empty"><h3>조건에 맞는 회원이 없습니다</h3><p>검색어를 변경하거나 필터를 조정해 주세요.</p></div>`;
+    return;
+  }
+
+  grid.innerHTML = list.map(m => {
+    const pct   = pctOf(m);
+    const sl    = stageOf(m);
+    const ivCnt = (m.interviews||[]).length;
+    const chips = [...(m.brandSheet.values||[]).slice(0,2), ...(m.strengths||[]).slice(0,1)];
+    const chipHTML = chips.length
+      ? `<div class="chips">${chips.map(c=>`<span class="chip chip-accent">${esc(c)}</span>`).join('')}${m.intensiveProjectTheme?`<span class="chip">${esc(m.intensiveProjectTheme.slice(0,22)+(m.intensiveProjectTheme.length>22?'…':''))}</span>`:''}</div>`
+      : '<div style="height:4px"></div>';
+
+    return `
+<div class="card" onclick="openDetail('${m.id}')">
+  <div class="c-head">
+    <div class="avatar">${initials(m.name)}</div>
+    <div class="c-meta">
+      <div class="c-name">${esc(m.name)}</div>
+      <div class="tag-row">${tagHTML(m)}${ivCnt?`<span class="tag" style="background:#F3F4F6;color:var(--txt-3)">면담 ${ivCnt}회</span>`:''}</div>
+    </div>
+    <button class="edit-ico" title="편집" onclick="event.stopPropagation();openEdit('${m.id}')">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    </button>
+  </div>
+  <div class="stage-wrap">
+    <div class="stage-row">
+      <span class="stage-lbl">성장 단계 · ${esc(sl)}</span>
+      <span class="stage-val">${pct}%</span>
+    </div>
+    <div class="track"><div class="fill" style="width:${pct}%"></div></div>
+  </div>
+  ${chipHTML}
+  <div class="c-foot">
+    <div style="min-width:0">
+      <div class="next-lbl">다음 과제</div>
+      <div class="next-val">${m.nextTask ? esc(m.nextTask) : '—'}</div>
+    </div>
+    <svg class="chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="9 18 15 12 9 6"/></svg>
+  </div>
+</div>`;
+  }).join('');
+}
+
+/* ── Modal orchestration ─────────────────────────────────── */
+function openDetail(id) {
+  const m = db.find(x=>x.id===id); if(!m) return;
+  curId = id; curMode = 'detail'; curTab = 'info';
+  openModal(m);
+}
+
+function openEdit(id) {
+  const m = db.find(x=>x.id===id); if(!m) return;
+  curId = id; curMode = 'edit'; curTab = 'info';
+  openModal(m);
+}
+
+function openModal(m) {
+  setModalHead(m);
+  renderTabBar(m);
+  renderBody(m);
+  renderFooter(m);
+  document.getElementById('overlay').classList.add('open');
+}
+
+function setModalHead(m) {
+  document.getElementById('m-av').textContent    = initials(m.name);
+  document.getElementById('m-nm').textContent    = m.name;
+  document.getElementById('m-tags').innerHTML    = tagHTML(m);
+}
+
+/* ── Tab Bar ─────────────────────────────────────────────── */
+function renderTabBar(m) {
+  const ivCnt = (m.interviews||[]).length;
+  const badge = ivCnt ? `<span class="tab-badge">${ivCnt}</span>` : '';
+  document.getElementById('m-tab-bar').innerHTML = `
+    <button class="m-tab${curTab==='info'?' active':''}" data-tab="info" onclick="switchTab('info')">기본 정보</button>
+    <button class="m-tab${curTab==='interviews'?' active':''}" data-tab="interviews" onclick="switchTab('interviews')">면담 이력${badge}</button>`;
+}
+
+function switchTab(tab) {
+  curTab = tab;
+  document.querySelectorAll('.m-tab').forEach(t => t.classList.toggle('active', t.dataset.tab===tab));
+  document.querySelectorAll('.tab-pane').forEach(p => {
+    const showing = p.dataset.pane===tab;
+    p.classList.toggle('hidden', !showing);
+    if (showing) { p.style.animation='none'; p.offsetHeight; p.style.animation=''; }
+  });
+}
+
+/* ── Body: renders both panes ────────────────────────────── */
+function renderBody(m) {
+  const infoHidden = curTab!=='info'  ? ' hidden' : '';
+  const ivHidden   = curTab!=='interviews' ? ' hidden' : '';
+  document.getElementById('m-body').innerHTML =
+    `<div class="tab-pane${infoHidden}" data-pane="info">${curMode==='edit' ? infoEditHTML(m) : infoDetailHTML(m)}</div>` +
+    `<div class="tab-pane${ivHidden}"   data-pane="interviews">${curMode==='edit' ? ivEditHTML(m) : ivDetailHTML(m)}</div>`;
+}
+
+/* ── Footer ──────────────────────────────────────────────── */
+function renderFooter(m) {
+  document.getElementById('m-foot').innerHTML = curMode==='edit' ? `
+    <button class="btn btn-danger" onclick="deleteMember()">삭제</button>
+    <div style="flex:1"></div>
+    <button class="btn btn-ghost" onclick="closeModal()">취소</button>
+    <button class="btn btn-primary" onclick="saveEdit()">저장</button>`
+  : `
+    <button class="btn btn-ghost" onclick="closeModal()">닫기</button>
+    <button class="btn btn-primary" onclick="openEdit('${m.id}')">편집</button>`;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   DETAIL VIEW — Info Pane
+═══════════════════════════════════════════════════════════ */
+function infoDetailHTML(m) {
+  const pct = pctOf(m), sl = stageOf(m);
+  return `<div class="pane-grid">
+    <div class="sec">
+      <div class="sec-ttl">기본 정보</div>
+      <div class="f-row"><div class="f-lbl">면담 형식</div><div class="f-val">${m.interviewFormat||'<span class="dash">—</span>'}</div></div>
+      <div class="f-row"><div class="f-lbl">면담 일시</div><div class="f-val">${m.interviewDate||'<span class="dash">—</span>'}</div></div>
+      <div class="f-row"><div class="f-lbl">디자인 관점</div><div class="f-val">${m.designPerspective||'<span class="dash">—</span>'}</div></div>
+    </div>
+    <div class="sec">
+      <div class="sec-ttl">브랜드 시트</div>
+      <div class="f-row"><div class="f-lbl">핵심 경험</div><div class="f-tags">${tagsSpan(m.brandSheet.coreExperiences)}</div></div>
+      <div class="f-row" style="margin-top:8px"><div class="f-lbl">핵심 가치</div><div class="f-tags">${tagsSpan(m.brandSheet.values)}</div></div>
+    </div>
+    <div class="sec full">
+      <div class="sec-ttl">인텐시브 프로젝트 주제</div>
+      <div class="f-val">${m.intensiveProjectTheme||'<span class="dash">—</span>'}</div>
+    </div>
+    <div class="sec">
+      <div class="sec-ttl">강점</div>
+      <div class="f-tags">${tagsSpan(m.strengths)}</div>
+    </div>
+    <div class="sec">
+      <div class="sec-ttl">보완점</div>
+      <div class="f-tags">${tagsSpan(m.improvements)}</div>
+    </div>
+    <div class="sec">
+      <div class="sec-ttl">튜터 피드백</div>
+      <div class="f-val">${m.tutorFeedback||'<span class="dash">—</span>'}</div>
+    </div>
+    <div class="sec">
+      <div class="sec-ttl">운영자 해석 (최종 평가)</div>
+      <div class="f-val">${m.operatorInterpretation||'<span class="dash">—</span>'}</div>
+    </div>
+    <div class="sec full">
+      <div class="sec-ttl">성장 가이드</div>
+      <div class="m-stage-bar">
+        <div class="m-stage-top"><span class="m-stage-name">${esc(sl)}</span><span class="m-stage-pct">${pct}%</span></div>
+        <div class="m-track"><div class="m-fill" style="width:${pct}%"></div></div>
+        <div class="stage-labels">${STAGES.map(s=>`<span>${s}</span>`).join('')}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px">
+        <div><div class="f-lbl">다음 과제</div><div class="f-val" style="margin-top:3px">${m.nextTask||'<span class="dash">—</span>'}</div></div>
+        <div><div class="f-lbl">향후 스케줄</div><div class="f-tags" style="margin-top:3px">${tagsSpan(m.futureSchedule)}</div></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   DETAIL VIEW — Interviews Pane
+═══════════════════════════════════════════════════════════ */
+function ivDetailHTML(m) {
+  const ivs = m.interviews || [];
+  if (!ivs.length) return `<div class="pane-iv"><div class="iv-empty">아직 면담 기록이 없습니다.</div></div>`;
+  return `<div class="pane-iv">${ivs.map((iv,i)=>`
+    <div class="iv-card">
+      <div class="iv-card-head">
+        <span class="iv-card-num">${i+1}차</span>
+        <span class="iv-card-title">${esc(iv.title)||`${i+1}차 면담`}</span>
+        ${iv.date ? `<span class="iv-card-date">${esc(iv.date)}</span>` : ''}
+      </div>
+      <div class="iv-card-body">
+        <div class="iv-card-content">${esc(iv.content)||'<span class="dash">내용 없음</span>'}</div>
+      </div>
+    </div>`).join('')}
+  </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   EDIT VIEW — Info Pane
+═══════════════════════════════════════════════════════════ */
+function infoEditHTML(m) {
+  const pct = pctOf(m);
+  return `<div class="pane-grid">
+    <div class="sec">
+      <div class="sec-ttl">기본 정보</div>
+      <div class="f-row"><div class="f-lbl">이름</div><input class="e-input" id="e-name" value="${esc(m.name)}"></div>
+      <div class="f-row" style="margin-top:8px"><div class="f-lbl">면담 상태</div>
+        <select class="e-select" id="e-status">
+          <option value="completed" ${m.interviewStatus==='completed'?'selected':''}>완료</option>
+          <option value="scheduled" ${m.interviewStatus==='scheduled'?'selected':''}>예정</option>
+          <option value="pending"   ${m.interviewStatus==='pending'?'selected':''}>대기</option>
+        </select>
+      </div>
+      <div class="f-row" style="margin-top:8px"><div class="f-lbl">면담 형식</div>
+        <select class="e-select" id="e-format">
+          <option value=""    ${!m.interviewFormat?'selected':''}>미정</option>
+          <option value="대면"  ${m.interviewFormat==='대면'?'selected':''}>대면</option>
+          <option value="온라인" ${m.interviewFormat==='온라인'?'selected':''}>온라인</option>
+          <option value="전화"  ${m.interviewFormat==='전화'?'selected':''}>전화</option>
+        </select>
+      </div>
+      <div class="f-row" style="margin-top:8px"><div class="f-lbl">면담 일시</div>
+        <input class="e-input" type="date" id="e-date" value="${esc(m.interviewDate)}">
+      </div>
+    </div>
+    <div class="sec">
+      <div class="sec-ttl">브랜드 시트</div>
+      <div class="f-row"><div class="f-lbl">핵심 경험 (쉼표 구분)</div>
+        <input class="e-input" id="e-exp" value="${esc((m.brandSheet.coreExperiences||[]).join(', '))}">
+      </div>
+      <div class="f-row" style="margin-top:8px"><div class="f-lbl">핵심 가치 (쉼표 구분)</div>
+        <input class="e-input" id="e-val" value="${esc((m.brandSheet.values||[]).join(', '))}">
+      </div>
+      <div class="f-row" style="margin-top:8px"><div class="f-lbl">디자인 관점</div>
+        <textarea class="e-input e-textarea" id="e-persp">${esc(m.designPerspective)}</textarea>
+      </div>
+    </div>
+    <div class="sec full">
+      <div class="sec-ttl">인텐시브 프로젝트 주제</div>
+      <input class="e-input" id="e-int" value="${esc(m.intensiveProjectTheme)}">
+    </div>
+    <div class="sec">
+      <div class="sec-ttl">강점 (쉼표 구분)</div>
+      <input class="e-input" id="e-str" value="${esc((m.strengths||[]).join(', '))}">
+    </div>
+    <div class="sec">
+      <div class="sec-ttl">보완점 (쉼표 구분)</div>
+      <input class="e-input" id="e-imp" value="${esc((m.improvements||[]).join(', '))}">
+    </div>
+    <div class="sec">
+      <div class="sec-ttl">튜터 피드백</div>
+      <textarea class="e-input e-textarea" id="e-tutor">${esc(m.tutorFeedback)}</textarea>
+    </div>
+    <div class="sec">
+      <div class="sec-ttl">운영자 해석 (최종 평가)</div>
+      <textarea class="e-input e-textarea" id="e-oper">${esc(m.operatorInterpretation)}</textarea>
+    </div>
+    <div class="sec full">
+      <div class="sec-ttl">성장 가이드</div>
+      <div class="f-row">
+        <div class="f-lbl" style="margin-bottom:6px">성장 단계</div>
+        <div class="stage-btns">
+          ${STAGES.map((s,i)=>`<button class="s-btn${m.growthStage.stageIndex===i?' on':''}" data-si="${i}" onclick="pickStage(${i})" type="button">${s}</button>`).join('')}
+        </div>
+      </div>
+      <div class="f-row" style="margin-top:10px">
+        <div class="f-lbl" style="margin-bottom:4px">세부 진행률 <span style="color:var(--txt-3)">(기본값: 단계 기준)</span></div>
+        <div class="e-range-row">
+          <input type="range" class="e-range" id="e-pct" min="0" max="100" value="${pct}"
+                 oninput="document.getElementById('e-pct-v').textContent=this.value+'%'">
+          <span class="e-range-val" id="e-pct-v">${pct}%</span>
+        </div>
+      </div>
+      <div class="f-row" style="margin-top:10px">
+        <div class="f-lbl" style="margin-bottom:4px">다음 과제</div>
+        <input class="e-input" id="e-next" value="${esc(m.nextTask)}">
+      </div>
+      <div class="f-row" style="margin-top:8px">
+        <div class="f-lbl" style="margin-bottom:4px">향후 스케줄 (쉼표 구분)</div>
+        <input class="e-input" id="e-sch" value="${esc((m.futureSchedule||[]).join(', '))}">
+      </div>
+    </div>
+  </div>`;
+}
+
+function pickStage(i) {
+  document.querySelectorAll('.s-btn').forEach((b,j)=>b.classList.toggle('on',j===i));
+  const p = document.getElementById('e-pct'), v = document.getElementById('e-pct-v');
+  if (p) { p.value = STAGE_PCT[i]; v.textContent = STAGE_PCT[i]+'%'; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   EDIT VIEW — Interviews Pane
+═══════════════════════════════════════════════════════════ */
+function ivEditHTML(m) {
+  const ivs = m.interviews || [];
+  const entries = ivs.map((iv,i) => ivEntryHTML(i+1, iv)).join('');
+  return `<div class="pane-iv">
+    <div id="iv-list">${entries}</div>
+    <button class="iv-add-btn" type="button" onclick="addInterviewEntry()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      면담 차수 추가
+    </button>
+  </div>`;
+}
+
+function ivEntryHTML(n, iv) {
+  return `<div class="iv-entry" data-iid="${esc(iv.id)}">
+    <div class="iv-head">
+      <span class="iv-num">${n}차</span>
+      <input class="iv-title-input" value="${esc(iv.title||n+'차 면담')}" placeholder="${n}차 면담" aria-label="면담 타이틀">
+      <button class="iv-del" type="button" onclick="removeInterviewEntry(this)" title="삭제">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="iv-body">
+      <div class="f-row">
+        <div class="f-lbl">면담 일자</div>
+        <input class="e-input iv-date" type="date" value="${esc(iv.date)}">
+      </div>
+      <div class="f-row" style="margin-top:6px">
+        <div class="f-lbl">주요 과제 및 결과</div>
+        <textarea class="e-input e-textarea iv-content" rows="4" placeholder="면담 내용, 피드백, 과제 등을 기록하세요…">${esc(iv.content)}</textarea>
+      </div>
+    </div>
+  </div>`;
+}
+
+function addInterviewEntry() {
+  const list = document.getElementById('iv-list');
+  const n    = list.querySelectorAll('.iv-entry').length + 1;
+  const iv   = { id: uid(), title: `${n}차 면담`, date: '', content: '' };
+  list.insertAdjacentHTML('beforeend', ivEntryHTML(n, iv));
+  updateInterviewBadge();
+  // Smooth scroll to new entry
+  list.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function removeInterviewEntry(btn) {
+  btn.closest('.iv-entry').remove();
+  reindexEntries();
+  updateInterviewBadge();
+}
+
+function reindexEntries() {
+  document.querySelectorAll('#iv-list .iv-entry').forEach((el, i) => {
+    const numEl = el.querySelector('.iv-num');
+    if (numEl) numEl.textContent = `${i+1}차`;
+  });
+}
+
+function updateInterviewBadge() {
+  const count = document.querySelectorAll('#iv-list .iv-entry').length;
+  const tab   = document.querySelector('.m-tab[data-tab="interviews"]');
+  if (!tab) return;
+  let badge = tab.querySelector('.tab-badge');
+  if (!badge) {
+    badge = document.createElement('span');
+    badge.className = 'tab-badge';
+    tab.appendChild(badge);
+  }
+  badge.textContent = count;
+  badge.style.display = count ? '' : 'none';
+}
+
+/* ── Save / Delete ───────────────────────────────────────── */
+function saveEdit() {
+  const m = db.find(x=>x.id===curId); if(!m) return;
+
+  // — Basic info (read from info pane if it exists in DOM)
+  const get = id => { const el = document.getElementById(id); return el ? el.value : null; };
+
+  if (get('e-name') !== null) {
+    m.name               = get('e-name').trim() || '이름 없음';
+    m.interviewStatus    = get('e-status');
+    m.interviewFormat    = get('e-format');
+    m.interviewDate      = get('e-date');
+    m.brandSheet.coreExperiences = arrInput('e-exp');
+    m.brandSheet.values  = arrInput('e-val');
+    m.designPerspective  = get('e-persp').trim();
+    m.intensiveProjectTheme = get('e-int').trim();
+    m.strengths          = arrInput('e-str');
+    m.improvements       = arrInput('e-imp');
+    m.tutorFeedback      = get('e-tutor').trim();
+    m.operatorInterpretation = get('e-oper').trim();
+    const si = document.querySelector('.s-btn.on');
+    m.growthStage.stageIndex = si ? +si.dataset.si : 0;
+    const pv = parseInt(get('e-pct'));
+    m.growthStage.customPercent = pv !== STAGE_PCT[m.growthStage.stageIndex] ? pv : null;
+    m.nextTask           = get('e-next').trim();
+    m.futureSchedule     = arrInput('e-sch');
+  }
+
+  // — Interviews (read from interviews pane if it exists in DOM)
+  const ivList = document.getElementById('iv-list');
+  if (ivList) {
+    m.interviews = Array.from(ivList.querySelectorAll('.iv-entry')).map((el, i) => ({
+      id:      el.dataset.iid || uid(),
+      title:   el.querySelector('.iv-title-input').value.trim() || `${i+1}차 면담`,
+      date:    el.querySelector('.iv-date').value,
+      content: el.querySelector('.iv-content').value.trim()
+    }));
+  }
+
+  save(); render(); closeModal(); toast('저장되었습니다');
+}
+
+function deleteMember() {
+  const m = db.find(x=>x.id===curId); if(!m) return;
+  if(!confirm(`'${m.name}' 회원을 삭제할까요?`)) return;
+  db = db.filter(x=>x.id!==curId);
+  save(); render(); closeModal(); toast('삭제되었습니다');
+}
+
+function addMember() {
+  const m = blank();
+  db.push(m); save(); render(); openEdit(m.id);
+}
+
+/* ── Modal helpers ───────────────────────────────────────── */
+function closeModal() {
+  document.getElementById('overlay').classList.remove('open');
+  curId = null;
+}
+
+function onOverlay(e) {
+  if (e.target===document.getElementById('overlay')) closeModal();
+}
+
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeModal(); });
+
+/* ── JSON Import / Export ────────────────────────────────── */
+function importJSON(ev) {
+  const f = ev.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = e => {
+    try {
+      let data = JSON.parse(e.target.result);
+      if(!Array.isArray(data)) throw new Error('최상위가 배열이어야 합니다');
+      db = data.map(normalise);
+      save(); render(); toast(`${db.length}명 데이터를 불러왔습니다`);
+    } catch(err) { alert('JSON 파싱 오류: ' + err.message); }
+  };
+  r.readAsText(f);
+  ev.target.value = '';
+}
+
+function exportJSON() {
+  const blob = new Blob([JSON.stringify(db, null, 2)], { type:'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `sdm_members_${new Date().toISOString().slice(0,10)}.json`;
+  a.click(); URL.revokeObjectURL(a.href);
+  toast('JSON 파일을 내보냈습니다');
+}
+
+/* ── Toast ───────────────────────────────────────────────── */
+let _tt;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(_tt); _tt = setTimeout(()=>el.classList.remove('show'), 2400);
+}
+
+/* ── Init ────────────────────────────────────────────────── */
+load();
+render();
+</script>
+</body>
+</html>
