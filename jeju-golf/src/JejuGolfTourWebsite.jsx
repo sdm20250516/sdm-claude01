@@ -187,14 +187,24 @@ function MapSection() {
               {mapLocations.map((loc) => (
                 <div key={loc.name} className="absolute -translate-x-1/2 -translate-y-1/2" style={{ left: loc.x, top: loc.y }}>
                   <div className="group relative flex flex-col items-center">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full text-lg text-white shadow-lg ring-4 ring-white" style={{ background: NAVY }}>
+                    {/* 툴팁 — 아이콘 위에 팝업 */}
+                    <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-3 w-52 -translate-x-1/2
+                                    rounded-xl p-3 text-xs leading-5 text-white shadow-xl
+                                    opacity-0 -translate-y-1 scale-95
+                                    transition-all duration-200 ease-out
+                                    group-hover:opacity-100 group-hover:translate-y-0 group-hover:scale-100"
+                         style={{ background: NAVY }}>
+                      <p className="font-bold text-sm">{loc.name}</p>
+                      <p className="mt-0.5 font-medium text-blue-300">{loc.type}</p>
+                      <p className="mt-1 text-slate-300">{loc.desc}</p>
+                      {/* 말풍선 화살표 */}
+                      <div className="absolute left-1/2 top-full -translate-x-1/2 w-0 h-0"
+                           style={{ borderLeft: '6px solid transparent', borderRight: '6px solid transparent', borderTop: `6px solid ${NAVY}` }} />
+                    </div>
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full text-lg text-white shadow-lg ring-4 ring-white transition-transform duration-150 group-hover:scale-110" style={{ background: NAVY }}>
                       {loc.type === '공항' ? ICONS.plane : loc.type.includes('숙소') ? ICONS.hotel : ICONS.flag}
                     </div>
                     <div className="mt-1 whitespace-nowrap rounded-full bg-white px-2 py-1 text-[11px] font-bold shadow-sm">{loc.name}</div>
-                    <div className="pointer-events-none absolute top-14 z-10 hidden w-52 rounded-xl p-3 text-xs leading-5 text-white shadow-xl group-hover:block" style={{ background: NAVY }}>
-                      <p className="font-bold">{loc.type}</p>
-                      <p className="text-blue-200">{loc.desc}</p>
-                    </div>
                   </div>
                 </div>
               ))}
