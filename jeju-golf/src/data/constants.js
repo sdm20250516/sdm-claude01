@@ -130,7 +130,7 @@ export const golfCourses = [
 export const bookingPlatforms = [
   { name: "카카오골프",   bg: "bg-yellow-400 hover:bg-yellow-300", text: "text-slate-900", href: "https://www.kakao.golf/" },
   { name: "스마트스코어", bg: "bg-blue-600 hover:bg-blue-500",     text: "text-white",    href: "https://www.smartscore.kr/booking/main" },
-  { name: "SBS골프",     bg: "bg-red-600 hover:bg-red-500",       text: "text-white",    href: "https://golf.sbs.co.kr/booking/main" },
+  { name: "XGOLF",      bg: "bg-red-600 hover:bg-red-500",       text: "text-white",    href: "https://www.xgolf.com/booking/list" },
   { name: "골팡",        bg: "bg-emerald-600 hover:bg-emerald-500", text: "text-white",  href: "https://www.golfpang.com/" },
 ];
 
