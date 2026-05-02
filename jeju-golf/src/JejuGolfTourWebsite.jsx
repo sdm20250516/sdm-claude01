@@ -55,10 +55,10 @@ function HeroSection() {
             6월 2일~5일, 직장 동료 2명 + 제주 현지 지인 1명. 4회 라운딩, 지인 차량 이동, 간단 술자리 중심의 관계형 골프 여행.
           </p>
           <div className="mt-8 grid gap-3 md:grid-cols-4">
-            <InfoPill icon={ICONS.calendar} label="3박 4일"  value="2026.06.02~06.05" />
-            <InfoPill icon={ICONS.plane}    label="항공"     value="김포 ↔ 제주" />
-            <InfoPill icon={ICONS.flag}     label="라운딩"   value="9홀 1회 + 18홀 3회" />
-            <InfoPill icon={ICONS.car}      label="이동"     value="지인 차량 찬스" />
+            <InfoPill icon={ICONS.calendar} label="3박 4일"  value="2026.06.02~06.05" href="#schedule" />
+            <InfoPill icon={ICONS.plane}    label="항공"     value="김포 ↔ 제주"       href="#booking" />
+            <InfoPill icon={ICONS.flag}     label="라운딩"   value="9홀 1회 + 18홀 3회" href="#reservation" />
+            <InfoPill icon={ICONS.car}      label="이동"     value="지인 차량 찬스"    href="#map" />
           </div>
         </motion.div>
       </div>
@@ -149,7 +149,7 @@ function LodgingSection({ selected, lodgingPlan, setLodgingPlan }) {
 function MapSection() {
   const getLocation = (name) => mapLocations.find((l) => l.name === name);
   return (
-    <section className="mb-10">
+    <section id="map" className="mb-10">
       <Card className="rounded-2xl shadow-sm ring-1 ring-slate-200">
         <CardContent className="p-6">
           <div className="mb-4 flex items-center gap-2">
@@ -241,7 +241,7 @@ function MapSection() {
 /* ── Schedule ─────────────────────────────────────────── */
 function ScheduleSection() {
   return (
-    <section className="mb-10">
+    <section id="schedule" className="mb-10">
       <h2 className="mb-5 text-2xl font-bold" style={{ color: NAVY }}>일정 타임라인</h2>
       <div className="grid gap-5">
         {schedule.map((item, index) => (
@@ -275,7 +275,7 @@ function ScheduleSection() {
 /* ── Reservation ──────────────────────────────────────── */
 function ReservationSection() {
   return (
-    <section className="mb-10">
+    <section id="reservation" className="mb-10">
       <div className="mb-5 flex flex-wrap items-center gap-3">
         <Icon>{ICONS.link}</Icon>
         <h2 className="text-2xl font-bold" style={{ color: NAVY }}>골프장 예약 비교</h2>
@@ -366,7 +366,7 @@ function GolfCourseCard({ course }) {
 /* ── Booking + Cost ───────────────────────────────────── */
 function BookingAndCostSection() {
   return (
-    <section className="mb-10 grid gap-5 md:grid-cols-2">
+    <section id="booking" className="mb-10 grid gap-5 md:grid-cols-2">
       <Card className="rounded-2xl shadow-sm ring-1 ring-slate-200">
         <CardContent className="p-6">
           <div className="mb-4 flex items-center gap-2">

@@ -13,16 +13,24 @@ export function Icon({ children }) {
 }
 
 /** 히어로 섹션 정보 필 */
-export function InfoPill({ icon, label, value }) {
-  return (
-    <div className="rounded-2xl bg-white/10 p-4 backdrop-blur">
-      <div className="mb-2 flex items-center gap-2 text-blue-200">
+export function InfoPill({ icon, label, value, href }) {
+  const cls = `group block rounded-2xl bg-white/10 p-4 backdrop-blur
+    transition-all duration-200 cursor-pointer
+    hover:bg-white/20 hover:scale-[1.04] hover:shadow-lg hover:shadow-black/20
+    active:scale-100`;
+  const inner = (
+    <>
+      <div className="mb-2 flex items-center gap-2 text-blue-200 group-hover:text-white transition-colors duration-200">
         <Icon>{icon}</Icon>
         <span className="text-xs">{label}</span>
       </div>
-      <p className="font-semibold">{value}</p>
-    </div>
+      <p className="font-semibold group-hover:text-white transition-colors duration-200">{value}</p>
+    </>
   );
+  if (href) {
+    return <a href={href} className={cls}>{inner}</a>;
+  }
+  return <div className={cls}>{inner}</div>;
 }
 
 /** 핵심 전략 카드 */
