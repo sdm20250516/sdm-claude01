@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Icon, InfoPill, Strategy, Mini } from '@/components/shared/Helpers';
@@ -11,6 +11,21 @@ import {
   bookingPriority, costs,
 } from '@/data/constants';
 
+/* ─── D-day 훅 ──────────────────────────────────────────── */
+function useDDay(targetDate) {
+  const [days, setDays] = useState(null);
+  useEffect(() => {
+    const calc = () => {
+      const diff = Math.ceil((new Date(targetDate) - new Date()) / 86400000);
+      setDays(diff);
+    };
+    calc();
+    const id = setInterval(calc, 60000);
+    return () => clearInterval(id);
+  }, [targetDate]);
+  return days;
+}
+
 /* ══════════════════════════════════════════════════════════
    메인 컴포넌트
 ══════════════════════════════════════════════════════════ */
@@ -21,7 +36,8 @@ export default function JejuGolfTourWebsite() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <HeroSection />
-      <main className="mx-auto max-w-6xl px-6 py-10">
+      <NavBar />
+      <main className="mx-auto max-w-6xl px-4 py-10 md:px-6">
         <StrategySection />
         <LodgingSection selected={selected} lodgingPlan={lodgingPlan} setLodgingPlan={setLodgingPlan} />
         <MapSection />
@@ -33,11 +49,71 @@ export default function JejuGolfTourWebsite() {
   );
 }
 
+/* ── NavBar ───────────────────────────────────────────── */
+function NavBar() {
+  const [active, setActive] = useState('');
+
+  useEffect(() => {
+    const ids = ['strategy', 'lodging', 'map', 'schedule', 'reservation', 'booking'];
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => { if (e.isIntersecting) setActive(e.target.id); });
+      },
+      { rootMargin: '-40% 0px -55% 0px' }
+    );
+    ids.forEach((id) => { const el = document.getElementById(id); if (el) observer.observe(el); });
+    return () => observer.disconnect();
+  }, []);
+
+  const links = [
+    { id: 'strategy',    label: '핵심 전략' },
+    { id: 'lodging',     label: '숙소' },
+    { id: 'map',         label: '동선 지도' },
+    { id: 'schedule',    label: '일정' },
+    { id: 'reservation', label: '예약' },
+    { id: 'booking',     label: '비용' },
+  ];
+
+  return (
+    <nav className="sticky top-0 z-[200] bg-white/95 backdrop-blur shadow-sm border-b border-slate-100">
+      <div className="mx-auto flex max-w-6xl items-center gap-1 overflow-x-auto px-4 py-2 md:px-6"
+           style={{ scrollbarWidth: 'none' }}>
+        {links.map(({ id, label }) => (
+          <a
+            key={id}
+            href={`#${id}`}
+            className="shrink-0 rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-200"
+            style={
+              active === id
+                ? { background: NAVY, color: '#fff' }
+                : { color: '#64748b' }
+            }
+            onMouseEnter={(e) => { if (active !== id) e.currentTarget.style.background = '#f1f5f9'; }}
+            onMouseLeave={(e) => { if (active !== id) e.currentTarget.style.background = ''; }}
+          >
+            {label}
+          </a>
+        ))}
+      </div>
+    </nav>
+  );
+}
+
 /* ── Hero ─────────────────────────────────────────────── */
 function HeroSection() {
+  const dday = useDDay('2026-06-02');
+  const [copied, setCopied] = useState(false);
+
+  const handleShare = () => {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
   return (
     <section
-      className="relative overflow-hidden px-6 py-12 text-white"
+      className="relative overflow-hidden px-4 py-12 text-white md:px-6 md:py-16"
       style={{ background: `linear-gradient(135deg,${NAVY} 0%,#1a3a6b 60%,#1e5096 100%)` }}
     >
       <div
@@ -49,17 +125,42 @@ function HeroSection() {
       />
       <div className="mx-auto max-w-6xl">
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-          <p className="mb-3 text-sm font-medium tracking-[0.3em] text-blue-200">JEJU GOLF TOUR</p>
-          <h1 className="text-4xl font-bold leading-tight md:text-6xl">제주 골프투어 실행 패키지</h1>
-          <p className="mt-5 max-w-3xl text-lg text-blue-100">
+
+          {/* 배지 행 */}
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <p className="text-sm font-medium tracking-[0.3em] text-blue-200">JEJU GOLF TOUR</p>
+            {dday !== null && (
+              <span className="rounded-full bg-white/20 px-3 py-0.5 text-sm font-bold backdrop-blur">
+                {dday > 0 ? `D-${dday}` : dday === 0 ? '🎉 D-DAY' : `D+${Math.abs(dday)}`}
+              </span>
+            )}
+          </div>
+
+          <h1 className="text-3xl font-bold leading-tight md:text-5xl lg:text-6xl">
+            제주 골프투어 실행 패키지
+          </h1>
+          <p className="mt-4 max-w-3xl text-base text-blue-100 md:text-lg">
             6월 2일~5일, 직장 동료 2명 + 제주 현지 지인 1명. 4회 라운딩, 지인 차량 이동, 간단 술자리 중심의 관계형 골프 여행.
           </p>
-          <div className="mt-8 grid gap-3 md:grid-cols-4">
-            <InfoPill icon={ICONS.calendar} label="3박 4일"  value="2026.06.02~06.05" href="#schedule" />
-            <InfoPill icon={ICONS.plane}    label="항공"     value="김포 ↔ 제주"       href="#booking" />
-            <InfoPill icon={ICONS.flag}     label="라운딩"   value="9홀 1회 + 18홀 3회" href="#reservation" />
-            <InfoPill icon={ICONS.car}      label="이동"     value="지인 차량 찬스"    href="#map" />
+
+          {/* 요약 카드 — 모바일 2열 */}
+          <div className="mt-6 grid grid-cols-2 gap-3 md:mt-8 md:grid-cols-4">
+            <InfoPill icon={ICONS.calendar} label="3박 4일"      value="2026.06.02~06.05"  href="#schedule" />
+            <InfoPill icon={ICONS.plane}    label="항공"          value="김포 ↔ 제주"        href="#booking" />
+            <InfoPill icon={ICONS.flag}     label="라운딩"        value="9홀 1회 + 18홀 3회" href="#reservation" />
+            <InfoPill icon={ICONS.car}      label="이동"          value="지인 차량 찬스"     href="#map" />
           </div>
+
+          {/* 공유 버튼 */}
+          <div className="mt-5">
+            <button
+              onClick={handleShare}
+              className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-4 py-2 text-sm font-medium text-white backdrop-blur transition-all hover:bg-white/20 active:scale-95"
+            >
+              {copied ? '✓ 링크가 복사됐습니다' : '🔗 공유하기'}
+            </button>
+          </div>
+
         </motion.div>
       </div>
     </section>
@@ -69,14 +170,14 @@ function HeroSection() {
 /* ── Strategy ─────────────────────────────────────────── */
 function StrategySection() {
   return (
-    <section className="mb-10 grid gap-5 md:grid-cols-3">
+    <section id="strategy" className="mb-10 grid gap-5 md:grid-cols-3">
       <Card className="rounded-2xl shadow-sm ring-1 ring-slate-200 md:col-span-2">
         <CardContent className="p-6">
           <div className="mb-5 flex items-center gap-2">
             <Icon>{ICONS.trophy}</Icon>
             <h2 className="text-2xl font-bold" style={{ color: NAVY }}>핵심 전략</h2>
           </div>
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-3">
             <Strategy title="가성비"      desc="회사 숙소 당첨을 최우선, 미당첨 시 우주항공호텔 백업" />
             <Strategy title="편한 라운딩"  desc="동부 이동은 배제하고 서부·중문권 중심으로 압축" />
             <Strategy title="관계 중심"   desc="맛집 투어보다 지인과 편하게 대화하는 저녁 구성" />
@@ -100,46 +201,59 @@ function StrategySection() {
 
 /* ── Lodging ──────────────────────────────────────────── */
 function LodgingSection({ selected, lodgingPlan, setLodgingPlan }) {
+  const plans = [
+    { key: 'company',  label: '회사 숙소' },
+    { key: 'fallback', label: '우주항공호텔' },
+    { key: 'hybrid',   label: '리조트 패키지' },
+  ];
+
   return (
-    <section className="mb-10">
-      <div className="mb-5 flex items-center justify-between gap-3">
+    <section id="lodging" className="mb-10">
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-2xl font-bold" style={{ color: NAVY }}>숙소 플랜 선택</h2>
         <div className="flex flex-wrap gap-2">
-          {[
-            { key: 'company',  label: '회사 숙소' },
-            { key: 'fallback', label: '우주항공호텔' },
-            { key: 'hybrid',   label: '리조트 패키지' },
-          ].map(({ key, label }) => (
+          {plans.map(({ key, label }) => (
             <Button key={key} variant={lodgingPlan === key ? 'default' : 'outline'} onClick={() => setLodgingPlan(key)}>
               {label}
             </Button>
           ))}
         </div>
       </div>
-      <Card className="rounded-2xl shadow-sm ring-1 ring-slate-200">
-        <CardContent className="grid gap-6 p-6 md:grid-cols-3">
-          <div className="md:col-span-2">
-            <div className="mb-3 flex items-center gap-2">
-              <Icon>{ICONS.hotel}</Icon>
-              <h3 className="text-xl font-bold" style={{ color: NAVY }}>{selected.title}</h3>
-            </div>
-            <p className="text-slate-700">{selected.subtitle}</p>
-            <p className="mt-4 rounded-xl bg-slate-100 p-4 font-semibold">{selected.cost}</p>
-            <div className="mt-4 grid gap-2 md:grid-cols-3">
-              {selected.pros.map((p) => (
-                <div key={p} className="flex items-start gap-2 rounded-xl border bg-white p-3 text-sm">
-                  <Icon>{ICONS.check}</Icon><span>{p}</span>
+
+      <Card className="rounded-2xl shadow-sm ring-1 ring-slate-200 overflow-hidden">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={lodgingPlan}
+            initial={{ opacity: 0, x: 14 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -14 }}
+            transition={{ duration: 0.22 }}
+          >
+            <CardContent className="grid gap-6 p-6 md:grid-cols-3">
+              <div className="md:col-span-2">
+                <div className="mb-3 flex items-center gap-2">
+                  <Icon>{ICONS.hotel}</Icon>
+                  <h3 className="text-xl font-bold" style={{ color: NAVY }}>{selected.title}</h3>
                 </div>
-              ))}
-            </div>
-          </div>
-          <div className="rounded-2xl bg-amber-50 p-5">
-            <div className="mb-2 flex items-center gap-2 font-bold text-amber-900">
-              <Icon>{ICONS.alert}</Icon>주의 포인트
-            </div>
-            <p className="text-sm leading-6 text-amber-900">{selected.caution}</p>
-          </div>
-        </CardContent>
+                <p className="text-slate-700">{selected.subtitle}</p>
+                <p className="mt-4 rounded-xl bg-slate-100 p-4 font-semibold">{selected.cost}</p>
+                <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                  {selected.pros.map((p) => (
+                    <div key={p} className="flex items-start gap-2 rounded-xl border bg-white p-3 text-sm">
+                      <Icon>{ICONS.check}</Icon><span>{p}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="rounded-2xl bg-amber-50 p-5">
+                <div className="mb-2 flex items-center gap-2 font-bold text-amber-900">
+                  <Icon>{ICONS.alert}</Icon>주의 포인트
+                </div>
+                <p className="text-sm leading-6 text-amber-900">{selected.caution}</p>
+              </div>
+            </CardContent>
+          </motion.div>
+        </AnimatePresence>
       </Card>
     </section>
   );
@@ -151,14 +265,14 @@ function MapSection() {
   return (
     <section id="map" className="mb-10">
       <Card className="rounded-2xl shadow-sm ring-1 ring-slate-200">
-        <CardContent className="p-6">
+        <CardContent className="p-4 md:p-6">
           <div className="mb-4 flex items-center gap-2">
             <Icon>{ICONS.map}</Icon>
             <h2 className="text-2xl font-bold" style={{ color: NAVY }}>제주 동선 지도</h2>
           </div>
           <div className="grid gap-5 lg:grid-cols-[1.4fr_1fr]">
             {/* 지도 캔버스 */}
-            <div className="relative min-h-[400px] overflow-visible rounded-3xl border bg-gradient-to-br from-sky-100 via-emerald-50 to-lime-100 p-5">
+            <div className="relative min-h-[320px] overflow-visible rounded-3xl border bg-gradient-to-br from-sky-100 via-emerald-50 to-lime-100 p-5 md:min-h-[400px]">
               <div className="absolute left-[10%] top-[12%] h-[75%] w-[80%] rounded-[48%] border-4 border-emerald-200 bg-white/60 shadow-inner" />
               <div className="absolute left-[16%] top-[18%] h-[62%] w-[68%] rounded-[45%] border border-emerald-300/70" />
 
@@ -187,8 +301,8 @@ function MapSection() {
               {mapLocations.map((loc) => (
                 <div key={loc.name} className="absolute -translate-x-1/2 -translate-y-1/2 z-0 hover:z-[50]" style={{ left: loc.x, top: loc.y }}>
                   <div className="group relative flex flex-col items-center">
-                    {/* 툴팁 — 아이콘 위에 팝업 */}
-                    <div className="pointer-events-none absolute bottom-full left-1/2 z-[60] mb-3 w-52 -translate-x-1/2
+                    {/* 툴팁 */}
+                    <div className="pointer-events-none absolute bottom-full left-1/2 z-[60] mb-3 w-48 -translate-x-1/2
                                     rounded-xl p-3 text-xs leading-5 text-white shadow-xl
                                     opacity-0 -translate-y-1 scale-95
                                     transition-all duration-200 ease-out
@@ -197,7 +311,6 @@ function MapSection() {
                       <p className="font-bold text-sm">{loc.name}</p>
                       <p className="mt-0.5 font-medium text-blue-300">{loc.type}</p>
                       <p className="mt-1 text-slate-300">{loc.desc}</p>
-                      {/* 말풍선 화살표 */}
                       <div className="absolute left-1/2 top-full -translate-x-1/2 w-0 h-0"
                            style={{ borderLeft: '6px solid transparent', borderRight: '6px solid transparent', borderTop: `6px solid ${NAVY}` }} />
                     </div>
@@ -217,7 +330,7 @@ function MapSection() {
               {mapRoutes.map((route) => (
                 <div key={route.from + route.to} className="flex gap-3 rounded-2xl border bg-white p-3 text-sm transition-shadow hover:shadow-sm">
                   <div className="mt-1.5 h-3 w-3 shrink-0 rounded-full" style={{ background: route.color }} />
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <p className="font-semibold text-slate-800">{route.from} → {route.to}</p>
                     <div className="mt-1 flex gap-4 text-xs text-slate-500">
                       <span>{ICONS.road} {route.distance}</span>
@@ -240,33 +353,77 @@ function MapSection() {
 
 /* ── Schedule ─────────────────────────────────────────── */
 function ScheduleSection() {
+  const [expanded, setExpanded] = useState(null);
+
   return (
     <section id="schedule" className="mb-10">
-      <h2 className="mb-5 text-2xl font-bold" style={{ color: NAVY }}>일정 타임라인</h2>
-      <div className="grid gap-5">
-        {schedule.map((item, index) => (
-          <motion.div key={item.day} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: index * 0.07 }}>
-            <Card className="rounded-2xl shadow-sm ring-1 ring-slate-200">
-              <CardContent className="p-6">
-                <div className="grid gap-4 md:grid-cols-[160px_1fr]">
-                  <div>
-                    <p className="text-sm font-semibold text-slate-500">{item.date}</p>
-                    <p className="text-2xl font-bold" style={{ color: NAVY }}>{item.day}</p>
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold">{item.title}</h3>
-                    <div className="mt-4 grid gap-3 md:grid-cols-3">
-                      <Mini icon={ICONS.flag}     label="골프"     value={item.golf} />
-                      <Mini icon={ICONS.calendar} label="권장 시간" value={item.time} />
-                      <Mini icon={ICONS.food}     label="저녁"     value={item.dinner} />
+      <div className="mb-5 flex items-center justify-between">
+        <h2 className="text-2xl font-bold" style={{ color: NAVY }}>일정 타임라인</h2>
+        <p className="text-xs text-slate-400">카드를 클릭해 상세 보기</p>
+      </div>
+      <div className="grid gap-4">
+        {schedule.map((item, index) => {
+          const isOpen = expanded === item.day;
+          return (
+            <motion.div
+              key={item.day}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, delay: index * 0.07 }}
+            >
+              <Card className="rounded-2xl shadow-sm ring-1 ring-slate-200 overflow-hidden">
+                <CardContent className="p-0">
+                  {/* 헤더 — 항상 표시 */}
+                  <button
+                    onClick={() => setExpanded(isOpen ? null : item.day)}
+                    className="w-full flex items-center justify-between gap-4 px-5 py-4 text-left transition-colors hover:bg-slate-50 active:bg-slate-100"
+                  >
+                    <div className="flex items-center gap-4 min-w-0">
+                      <div className="shrink-0 text-center w-14">
+                        <p className="text-[11px] font-semibold text-slate-400">{item.date}</p>
+                        <p className="text-xl font-bold leading-tight" style={{ color: NAVY }}>{item.day}</p>
+                      </div>
+                      <div className="h-8 w-px bg-slate-200 shrink-0" />
+                      <div className="min-w-0">
+                        <p className="font-bold text-slate-800 truncate">{item.title}</p>
+                        <p className="text-sm text-slate-500 truncate mt-0.5">{ICONS.flag} {item.golf}</p>
+                      </div>
                     </div>
-                    <p className="mt-4 rounded-xl bg-slate-100 p-4 text-sm text-slate-700">{item.point}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))}
+                    <motion.span
+                      animate={{ rotate: isOpen ? 180 : 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="shrink-0 text-slate-400 text-xs"
+                    >▼</motion.span>
+                  </button>
+
+                  {/* 상세 — 펼칠 때 */}
+                  <AnimatePresence initial={false}>
+                    {isOpen && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.25, ease: 'easeInOut' }}
+                        className="overflow-hidden"
+                      >
+                        <div className="border-t border-slate-100 px-5 pb-5 pt-4">
+                          <div className="grid gap-3 sm:grid-cols-3">
+                            <Mini icon={ICONS.flag}     label="골프"     value={item.golf} />
+                            <Mini icon={ICONS.calendar} label="권장 시간" value={item.time} />
+                            <Mini icon={ICONS.food}     label="저녁"     value={item.dinner} />
+                          </div>
+                          <p className="mt-4 rounded-xl bg-slate-100 p-4 text-sm text-slate-700 leading-relaxed">
+                            {item.point}
+                          </p>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </CardContent>
+              </Card>
+            </motion.div>
+          );
+        })}
       </div>
     </section>
   );
@@ -292,9 +449,9 @@ function ReservationSection() {
         {otherLinks.map((link) => (
           <a key={link.name} href={link.href} target="_blank" rel="noreferrer"
             className="flex items-center justify-between gap-3 rounded-2xl border bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-            <div>
-              <p className="font-bold text-slate-800">{link.name}</p>
-              <p className="text-xs text-slate-500">{link.note}</p>
+            <div className="min-w-0">
+              <p className="font-bold text-slate-800 truncate">{link.name}</p>
+              <p className="text-xs text-slate-500 mt-0.5">{link.note}</p>
             </div>
             <span className="shrink-0 rounded-xl px-4 py-2 text-sm font-bold text-white" style={{ background: NAVY }}>
               {link.action}
@@ -313,8 +470,8 @@ function GolfCourseCard({ course }) {
       <CardContent className="p-5">
         {/* 헤더 */}
         <div className="mb-4 flex items-start justify-between gap-3">
-          <div>
-            <div className="mb-1 flex items-center gap-2">
+          <div className="min-w-0">
+            <div className="mb-1 flex flex-wrap items-center gap-2">
               <span className="rounded-full px-3 py-0.5 text-xs font-bold text-white" style={{ background: NAVY }}>{course.day}</span>
               <span className="text-xs text-slate-500">{course.date}</span>
               {isHigh && <span className="rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">최우선</span>}
@@ -349,7 +506,7 @@ function GolfCourseCard({ course }) {
           <div className="grid grid-cols-2 gap-2">
             {bookingPlatforms.map((p) => (
               <a key={p.name} href={p.href} target="_blank" rel="noreferrer"
-                className={`flex items-center justify-center rounded-xl px-3 py-2 text-xs font-bold transition-transform hover:-translate-y-0.5 ${p.bg} ${p.text}`}>
+                className={`flex items-center justify-center rounded-xl px-3 py-2 text-xs font-bold transition-transform hover:-translate-y-0.5 active:scale-95 ${p.bg} ${p.text}`}>
                 {p.name}
               </a>
             ))}
@@ -410,4 +567,3 @@ function BookingAndCostSection() {
     </section>
   );
 }
-
