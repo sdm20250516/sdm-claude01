@@ -185,10 +185,10 @@ function MapSection() {
 
               {/* 장소 마커 */}
               {mapLocations.map((loc) => (
-                <div key={loc.name} className="absolute -translate-x-1/2 -translate-y-1/2" style={{ left: loc.x, top: loc.y }}>
+                <div key={loc.name} className="absolute -translate-x-1/2 -translate-y-1/2 z-0 hover:z-[50]" style={{ left: loc.x, top: loc.y }}>
                   <div className="group relative flex flex-col items-center">
                     {/* 툴팁 — 아이콘 위에 팝업 */}
-                    <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-3 w-52 -translate-x-1/2
+                    <div className="pointer-events-none absolute bottom-full left-1/2 z-[60] mb-3 w-52 -translate-x-1/2
                                     rounded-xl p-3 text-xs leading-5 text-white shadow-xl
                                     opacity-0 -translate-y-1 scale-95
                                     transition-all duration-200 ease-out
