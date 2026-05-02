@@ -8,7 +8,7 @@ import {
   lodgingPlans, getLodgingPlan,
   schedule, mapLocations, mapRoutes,
   golfCourses, bookingPlatforms, otherLinks,
-  bookingPriority, costs, checklist,
+  bookingPriority, costs,
 } from '@/data/constants';
 
 /* ══════════════════════════════════════════════════════════
@@ -28,7 +28,6 @@ export default function JejuGolfTourWebsite() {
         <ScheduleSection />
         <ReservationSection />
         <BookingAndCostSection />
-        <ChecklistSection />
       </main>
     </div>
   );
@@ -402,22 +401,3 @@ function BookingAndCostSection() {
   );
 }
 
-/* ── Checklist ────────────────────────────────────────── */
-function ChecklistSection() {
-  return (
-    <section>
-      <Card className="rounded-2xl text-white shadow-sm" style={{ background: NAVY }}>
-        <CardContent className="p-6">
-          <h2 className="text-2xl font-bold">최종 실행 체크리스트</h2>
-          <div className="mt-5 grid gap-3 md:grid-cols-2">
-            {checklist.map((item) => (
-              <div key={item} className="flex items-start gap-2 rounded-xl bg-white/10 p-3 text-sm">
-                <Icon>{ICONS.check}</Icon><span>{item}</span>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    </section>
-  );
-}
